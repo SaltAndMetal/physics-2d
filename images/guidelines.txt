@@ -1,0 +1,5 @@
+1. Images are 100*100 pixels unless it is necessary to be otherwise.
+2. Images are in the bmp format
+3. Images usually have a black background
+4. Images usually have a white border 5 pixels thick
+5. The icon drawn is contained within the bounding box of (25, 25) to (75, 75), and usually touches it
