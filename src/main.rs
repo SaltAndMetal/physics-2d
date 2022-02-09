@@ -25,7 +25,7 @@ use sdl2::rect::Point;
 use std::time::Duration;
 
 extern crate crossbeam;
-//use crossbeam_utils::thread;
+use crossbeam::thread;
 
 
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
@@ -90,11 +90,19 @@ fn main()
         let mut points = Vec::new();
         
         for UI in &UIs {
-            points.append(&mut UI.display());
+            thread::scope( |s| {
+                s.spawn(|_| {
+                    points.append(&mut UI.display());
+                });
+            }).unwrap();
         }
 
         for object in &objects {
-           points.append(&mut object.display());
+            thread::scope( |s| {
+                s.spawn(|_| {
+                    points.append(&mut object.display());
+                });
+            }).unwrap();
         }
 
         canvas.set_draw_color(points[0].1);
