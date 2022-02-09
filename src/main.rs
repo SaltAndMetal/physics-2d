@@ -3,8 +3,6 @@
 mod vec2;
 use crate::vec2::*;
 
-use std::time::Instant;
-
 mod displayable;
 use crate::displayable::physics::Physics;
 use crate::displayable::physics::rect::Rect;
@@ -65,7 +63,6 @@ fn main()
     ];
 
     'running: loop {
-        let now = Instant::now();
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
         for event in event_pump.poll_iter() {
@@ -112,8 +109,6 @@ fn main()
             }
         }
 
-        let elapsed_time = now.elapsed();
-        //println!("{}", elapsed_time.as_millis());
         canvas.present();
         std::thread::sleep(Duration::from_millis(1_000/60));
     }

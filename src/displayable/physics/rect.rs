@@ -4,8 +4,6 @@ use super::super::Displayable;
 
 use sdl2::pixels::Color;
 use sdl2::rect::Point;
-use sdl2::render::Canvas;
-use sdl2::video::Window;
 
 extern crate bresenham;
 use bresenham::Bresenham;
