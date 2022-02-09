@@ -9,7 +9,7 @@ use sdl2::rect::Point;
 
 pub trait Displayable 
 {
-    fn display(&self, canvas: &mut Canvas<Window>);
+    fn display(&self) -> Vec<(Point, Color)>;
     fn color(&self) -> Color
     {
         Color::RGB(255, 255, 255)

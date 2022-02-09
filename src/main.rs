@@ -26,7 +26,9 @@ use sdl2::rect::Point;
 
 use std::time::Duration;
 
-use std::thread;
+extern crate crossbeam;
+use crossbeam_utils::thread;
+
 
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
 
@@ -51,7 +53,7 @@ fn init() -> (sdl2::render::Canvas<Window>, sdl2::EventPump)
 fn main()
 {
     let (mut canvas, mut event_pump) = init();
-
+    
     let mut UIs: Vec<Box<dyn UI + Send + Sync>> = vec![
         Box::new(Button::new(Point::new(0, 0), Point::new(100, 100), "images/rect.bmp")),
         Box::new(Button::new(Point::new(100, 100), Point::new(200, 200), "images/circle.bmp"))
