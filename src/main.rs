@@ -27,7 +27,7 @@ use sdl2::rect::Point;
 use std::time::Duration;
 
 extern crate crossbeam;
-use crossbeam_utils::thread;
+//use crossbeam_utils::thread;
 
 
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
@@ -89,13 +89,27 @@ fn main()
                 _ => {}
             }
         }
+
+        let mut points = Vec::new();
         
         for UI in &UIs {
-            UI.display(&mut canvas);
+            points.append(&mut UI.display());
         }
 
         for object in &objects {
-           object.display(&mut canvas);
+           points.append(&mut object.display());
+        }
+
+        canvas.set_draw_color(points[0].1);
+        let mut points = points.iter().peekable();
+        while let Some((point, color)) = points.next() {
+            canvas.draw_point(*point)
+                .expect("Problem drawing to screen");
+            if let Some(futColor) = points.peek() {
+                if *color != futColor.1 {
+                    canvas.set_draw_color(futColor.1);
+                }
+            }
         }
 
         let elapsed_time = now.elapsed();

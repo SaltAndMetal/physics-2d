@@ -18,7 +18,7 @@ pub struct Circle
 
 impl Displayable for Circle
 {
-    fn display(&self, canvas: &mut Canvas<Window>)
+    fn display(&self) -> Vec<(Point, Color)>
     {
         let r2 = self.radius.powf(2_f64);
         
@@ -44,13 +44,11 @@ impl Displayable for Circle
                 y -= 1;
             }
         }
-        let points: Vec<Point> = points.iter()
+        let points: Vec<(Point, Color)> = points.iter()
             .map(|a| vec![*a, Vec2::new(-a.x(), a.y()), Vec2::new(a.x(), -a.y()), Vec2::new(-a.x(), -a.y()), Vec2::new(a.y(), a.x()), Vec2::new(-a.y(), a.x()), Vec2::new(a.y(), -a.x()), Vec2::new(-a.y(), -a.x())]).flatten()
             .map(|a| a + self.centre)
-            .map(|x| Point::from(x)).collect();
-        
-        canvas.set_draw_color(self.color());
-        canvas.draw_points(&points[..]).unwrap();
+            .map(|x| (Point::from(x), self.color())).collect();
+        points
     }
 }
 impl Physics for Circle {}
