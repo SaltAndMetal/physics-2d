@@ -82,7 +82,18 @@ impl Intersect<Rect> for Circle
 {
     fn intersect(&self, other: &Rect) -> bool
     {
-        unimplemented!()
+        let points = other.points().map(|x| x-self.centre);
+        for i in 0..4 {
+            let next = if i != 3 {i+1} else {0};
+            let gradient = (points[i].y()- points[next].y())/(points[i].x()-points[next].y());
+            let y_int = points[i].y()-points[i].x()*gradient;
+            
+            let determinant = -(y_int.powf(2.0_f64))+(gradient*self.radius).powf(2.0_f64)+self.radius.powf(2.0_f64);
+            if determinant >= 0.0 {
+                return true;
+            }
+        }
+        false
     }
 }
 

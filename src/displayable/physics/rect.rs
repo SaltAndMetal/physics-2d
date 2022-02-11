@@ -1,5 +1,5 @@
 use crate::vec2::Vec2;
-use super::Physics;
+use super::{Physics, Intersect, circle::Circle};
 use super::super::Displayable;
 
 use sdl2::pixels::Color;
@@ -56,6 +56,22 @@ impl Physics for Rect
     }
 }
 
+impl Intersect<Rect> for Rect
+{
+    fn intersect(&self, other: &Rect) -> bool
+    {
+        unimplemented!()
+    }
+}
+
+impl Intersect<Circle> for Rect
+{
+    fn intersect(&self, other: &Circle) -> bool
+    {
+        other.intersect(self)
+    }
+}
+
 impl Rect
 {
     pub fn new(bottomLeft: Vec2, topRight: Vec2, rotation: f64) -> Rect
@@ -79,6 +95,11 @@ impl Rect
     pub fn topRight(&self) -> Vec2
     {
         self.points[2]
+    }
+
+    pub fn points(&self) -> [Vec2; 4]
+    {
+        self.points
     }
 
     pub fn rotation(&self) -> f64 
