@@ -62,7 +62,8 @@ impl Rect
     {
         let pointA = bottomLeft;
         let pointB = bottomLeft + Vec2::new(rotation.sin()*topRight.x(), rotation.cos()*topRight.y());
-        let pointC = topRight;
+        let angle = rotation + std::f64::consts::FRAC_PI_2;
+        let pointC = pointB + Vec2::new(angle.sin()*topRight.x(), angle.cos()*topRight.y());
         let angle = rotation + std::f64::consts::PI;
         let pointD = pointC + Vec2::new(angle.sin()*topRight.x(), angle.cos()*topRight.y());
 
