@@ -81,6 +81,14 @@ impl Div<f64> for Vec2
     }
 }
 
+impl AddAssign for Vec2
+{
+    fn add_assign(&mut self, other: Self)
+    {
+        *self = *self + other
+    }
+}
+
 impl PartialEq for Vec2
 {
     fn eq(&self, other: &Self) -> bool

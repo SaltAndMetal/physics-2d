@@ -1,5 +1,5 @@
 use crate::vec2::Vec2;
-use super::Physics;
+use super::{Physics, Intersect, rect::Rect};
 
 use sdl2::rect::Point;
 use sdl2::pixels::Color;
@@ -11,6 +11,8 @@ pub struct Circle
 {
     centre: Vec2,
     radius: f64,
+    velocity: Vec2,
+    mass: f64,
 }
 
 impl Displayable for Circle
@@ -48,13 +50,47 @@ impl Displayable for Circle
         points
     }
 }
-impl Physics for Circle {}
+impl Physics for Circle
+{
+    fn position(&self) -> Vec2
+    {
+        self.centre
+    }
+    fn velocity(&self) -> Vec2
+    {
+        self.velocity
+    }
+    fn mass(&self) -> f64
+    {
+        self.mass
+    }
+
+    fn integrate(&mut self)
+    {
+        self.centre += self.velocity
+    }
+}
+
+impl Intersect<Circle> for Circle
+{
+    fn intersect(&self, other: &Circle) -> bool
+    {
+        (self.position()-other.position()).len_squared() < (self.radius+other.radius).powf(2.0_f64)
+    }
+}
+impl Intersect<Rect> for Circle
+{
+    fn intersect(&self, other: &Rect) -> bool
+    {
+        unimplemented!()
+    }
+}
 
 impl Circle
 {
     pub fn new(centre: Vec2, radius: f64) -> Circle
     {
-        Circle{centre, radius}
+        Circle{centre, radius, velocity: Vec2::new(0.0, 0.0), mass: 1.0}
     }
 
     pub fn centre(&self) -> Vec2

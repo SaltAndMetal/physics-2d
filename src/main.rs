@@ -57,7 +57,7 @@ fn main()
         Box::new(Button::new(Point::new(100, 100), Point::new(200, 200), "images/circle.bmp"))
     ];
 
-    let objects: Vec<Box<dyn Physics + Send + Sync>> = vec![
+    let mut objects: Vec<Box<dyn Physics + Send + Sync>> = vec![
         Box::new(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 100.0), std::f64::consts::FRAC_PI_8)),
         Box::new(Circle::new(Vec2::new(0.0, 100.0), 100.0))
     ];
@@ -97,10 +97,11 @@ fn main()
             }).unwrap();
         }
 
-        for object in &objects {
+        for object in &mut objects {
             thread::scope( |s| {
                 s.spawn(|_| {
                     points.append(&mut object.display());
+                    object.integrate();
                 });
             }).unwrap();
         }
