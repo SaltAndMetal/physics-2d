@@ -70,9 +70,9 @@ impl Vec2
     }
     pub fn rotate(&self, axis: &Vec2, angle: f64) -> Vec2 {
         let relativePos = *self-*axis;
-        let (myMag, myAngle) = relativePos.polar();
-        let rotated = Vec2::from_polar(myMag, myAngle+angle);
-        rotated + *axis
+        let x = relativePos.x();
+        let y = relativePos.y();
+        *axis+Vec2{x: x*angle.cos()-y*angle.sin(), y: x*angle.sin()+y*angle.cos()}
 
     }
 }
