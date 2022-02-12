@@ -1,5 +1,5 @@
 use crate::vec2::Vec2;
-use super::{Physics, Intersect, circle::Circle};
+use super::{Physics, Intersect, Shape};
 use super::super::Displayable;
 
 use sdl2::pixels::Color;
@@ -8,7 +8,7 @@ use sdl2::rect::Point;
 extern crate bresenham;
 use bresenham::Bresenham;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Rect
 {
     points: [Vec2; 4],
@@ -56,19 +56,18 @@ impl Physics for Rect
     }
 }
 
-impl Intersect<Rect> for Rect
+impl Intersect for Rect
 {
-    fn intersect(&self, other: &Rect) -> bool
+    fn intersect(&self, other: &Shape) -> bool
     {
-        unimplemented!()
-    }
-}
-
-impl Intersect<Circle> for Rect
-{
-    fn intersect(&self, other: &Circle) -> bool
-    {
-        other.intersect(self)
+        match other {
+            Shape::Circle(circle) => {
+                circle.intersect(&Shape::Rect(*self))
+            },
+            Shape::Rect(rect) => {
+                unimplemented!()
+            }
+        }
     }
 }
 

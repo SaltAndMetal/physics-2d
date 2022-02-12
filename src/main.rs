@@ -4,12 +4,9 @@ mod vec2;
 use crate::vec2::*;
 
 mod displayable;
-use crate::displayable::physics::Physics;
-use crate::displayable::physics::rect::Rect;
-use crate::displayable::physics::circle::Circle;
+use crate::displayable::{Displayable, physics::{Shape, Physics, Intersect, rect::Rect, circle::Circle}};
 
-use crate::displayable::UI::UI;
-use crate::displayable::UI::button::Button;
+use crate::displayable::UI::{UI, button::Button};
 
 extern crate assert_approx_eq;
 pub use assert_approx_eq::assert_approx_eq;
@@ -57,9 +54,9 @@ fn main()
         Box::new(Button::new(Point::new(100, 100), Point::new(200, 200), "images/circle.bmp"))
     ];
 
-    let mut objects: Vec<Box<dyn Physics + Send + Sync>> = vec![
-        Box::new(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 100.0), std::f64::consts::FRAC_PI_8)),
-        Box::new(Circle::new(Vec2::new(0.0, 100.0), 100.0))
+    let mut objects: Vec<Shape> = vec![
+        Shape::Rect(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 100.0), std::f64::consts::FRAC_PI_4)),
+        Shape::Circle(Circle::new(Vec2::new(-390.0, 400.0), 100.0)),
     ];
 
     'running: loop {
@@ -93,6 +90,19 @@ fn main()
             thread::scope( |s| {
                 s.spawn(|_| {
                     points.append(&mut UI.display());
+                });
+            }).unwrap();
+        }
+
+        for object in &objects {
+            thread::scope( |s| {
+                s.spawn(|_| {
+                    if objects[0].intersect(&objects[1]) {
+                        println!("Intersecting!");
+                    }
+                    else {
+                        println!("Not");
+                    }
                 });
             }).unwrap();
         }

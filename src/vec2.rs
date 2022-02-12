@@ -39,6 +39,42 @@ impl Vec2
     {
         fst.x*snd.x+fst.y*snd.y
     }
+    pub fn polar(&self) -> (f64, f64) {
+        //Some trickery goes on here. I use the absolute value of x and y, putting the result in
+        //the first quadrant, then I adjust the angle back to the correct quadrant using the
+        //angleManip closure
+
+        let mag = self.len();
+        let angleManip = match (self.x(), self.y()) {
+            (x, y) if x > 0.0 && y > 0.0 => |x| {x},
+            (x, y) if x < 0.0 && y > 0.0 => |x| {std::f64::consts::PI-x},
+            (x, y) if x < 0.0 && y < 0.0 => |x| {std::f64::consts::PI+x},
+            (x, y) if x > 0.0 && y < 0.0 => |x| {std::f64::consts::TAU-x},
+            _ => { if self.x() < 0.0 {|_| std::f64::consts::PI} else {|_| 0.0}},
+        };
+        let angle = 
+            if self.x().abs() < 0.001 {
+                match self.y() {
+                    i if i > 0.0 => std::f64::consts::FRAC_PI_2,
+                    i if i < 0.0 => 3.0*std::f64::consts::FRAC_PI_2,
+                    _ => 0.0,
+                }
+            }
+            else {
+                angleManip((self.y()/self.x()).abs().atan())
+            };
+        (mag, angle)
+    }
+    pub fn from_polar(mag: f64, angle: f64) -> Vec2 {
+        Vec2{ x: angle.cos()*mag, y: angle.sin()*mag }
+    }
+    pub fn rotate(&self, axis: &Vec2, angle: f64) -> Vec2 {
+        let relativePos = *self-*axis;
+        let (myMag, myAngle) = relativePos.polar();
+        let rotated = Vec2::from_polar(myMag, myAngle+angle);
+        rotated + *axis
+
+    }
 }
 
 impl Add for Vec2
@@ -137,5 +173,48 @@ mod tests {
         assert_eq!(vecA*2.0, Vec2{x: 6.0, y: 8.0});
         assert_eq!(vecA+vecB, Vec2{x: 7.0, y: 5.5});
         assert_eq!(vecA-vecB, Vec2{x: -1.0, y: 2.5});
+    }
+    #[test]
+    fn polar()
+    {
+        assert_approx_eq!(Vec2{x: 1.0, y: 0.0}.polar().0, 1.0);
+        assert_approx_eq!(Vec2{x: 1.0, y: 0.0}.polar().1, 0.0);
+
+        assert_approx_eq!(Vec2{x: 1.0, y: 1.0}.polar().0, 2.0_f64.powf(0.5_f64));
+        assert_approx_eq!(Vec2{x: 1.0, y: 1.0}.polar().1, std::f64::consts::FRAC_PI_4);
+
+        assert_approx_eq!(Vec2{x: -1.0, y: 1.0}.polar().1, 3.0*std::f64::consts::FRAC_PI_4);
+        assert_approx_eq!(Vec2{x: -1.0, y: -1.0}.polar().1, 5.0*std::f64::consts::FRAC_PI_4);
+        assert_approx_eq!(Vec2{x: 1.0, y: -1.0}.polar().1, 7.0*std::f64::consts::FRAC_PI_4);
+
+        assert_approx_eq!(Vec2{x: 0.0, y: 1.0}.polar().1, std::f64::consts::FRAC_PI_2);
+
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.polar().0, 13.0_f64.powf(0.5_f64));
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.polar().1, 0.5880026035);
+    }
+    #[test]
+    fn from_polar()
+    {
+        assert_approx_eq!(Vec2::from_polar(1.0, 0.0).x(), 1.0);
+        assert_approx_eq!(Vec2::from_polar(1.0, 0.0).y(), 0.0);
+
+        assert_approx_eq!(Vec2::from_polar(2.0_f64.powf(0.5_f64), std::f64::consts::FRAC_PI_4).x(), 1.0);
+        assert_approx_eq!(Vec2::from_polar(2.0_f64.powf(0.5_f64), std::f64::consts::FRAC_PI_4).y(), 1.0);
+
+        assert_approx_eq!(Vec2::from_polar(1.0, std::f64::consts::FRAC_PI_2).x(), 0.0);
+        assert_approx_eq!(Vec2::from_polar(1.0, std::f64::consts::FRAC_PI_2).y(), 1.0);
+
+        assert_approx_eq!(Vec2::from_polar(13.0_f64.powf(0.5_f64), 0.5880026035).x(), 3.0);
+        assert_approx_eq!(Vec2::from_polar(13.0_f64.powf(0.5_f64), 0.5880026035).y(), 2.0);
+    }
+    #[test]
+    fn rotate()
+    {
+        let origin = Vec2{x: 0.0, y: 0.0};
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, 0.0).x(), 3.0);
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, 0.0).y(), 2.0);
+
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, std::f64::consts::FRAC_PI_2).x(), -2.0);
+        assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, std::f64::consts::FRAC_PI_2).y(), 3.0);
     }
 }
