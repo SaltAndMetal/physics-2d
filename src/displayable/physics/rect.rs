@@ -39,7 +39,7 @@ impl Physics for Rect
 {
     fn position(&self) -> Vec2
     {
-        (self.points[0]+self.points[1])/2.0
+        (self.points[0]+self.points[2])/2.0
     }
     fn velocity(&self) -> Vec2
     {
@@ -52,7 +52,9 @@ impl Physics for Rect
 
     fn integrate(&mut self)
     {
-        self.points.map(|x| x + self.velocity);
+        self.points = self.points.map(|x| x + self.velocity);
+        //self.rotation += 0.01;
+        //self.points = self.points.map(|x| x.rotate(&self.position(), 0.01));
     }
 }
 
@@ -83,7 +85,7 @@ impl Rect
         let pointD = pointC + Vec2::new(angle.sin()*topRight.x(), angle.cos()*topRight.y());
 
         let points = [pointA, pointB, pointC, pointD];
-        Rect{points, rotation, velocity: Vec2::new(0.0, 0.0), mass: 1.0}
+        Rect{points, rotation, velocity: Vec2::new(-1.0, 0.0), mass: 1.0}
     }
         
     pub fn bottomLeft(&self) -> Vec2

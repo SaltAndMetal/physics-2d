@@ -24,6 +24,7 @@ use std::time::Duration;
 extern crate crossbeam;
 use crossbeam::thread;
 
+use std::sync::{Arc, Mutex};
 
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
 
@@ -55,8 +56,8 @@ fn main()
     ];
 
     let mut objects: Vec<Shape> = vec![
-        Shape::Rect(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 100.0), std::f64::consts::FRAC_PI_4)),
-        Shape::Circle(Circle::new(Vec2::new(-390.0, 400.0), 100.0)),
+        Shape::Rect(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 200.0), 0.0)),
+        Shape::Circle(Circle::new(Vec2::new(-390.0, 100.0), 100.0)),
     ];
 
     'running: loop {
@@ -84,18 +85,16 @@ fn main()
             }
         }
 
-        let mut points = Vec::new();
+        let points = Arc::new(Mutex::new(Vec::new()));
         
-        for UI in &UIs {
-            thread::scope( |s| {
+        thread::scope( |s| {
+            for UI in &UIs {
                 s.spawn(|_| {
-                    points.append(&mut UI.display());
+                    let p = &mut UI.display();
+                    points.lock().unwrap().append(p);
                 });
-            }).unwrap();
-        }
-
-        for object in &objects {
-            thread::scope( |s| {
+            }
+            for object in &objects {
                 s.spawn(|_| {
                     if objects[0].intersect(&objects[1]) {
                         println!("Intersecting!");
@@ -103,18 +102,21 @@ fn main()
                     else {
                         println!("Not");
                     }
+                    let p = &mut object.display();
+                    points.lock().unwrap().append(p);
                 });
-            }).unwrap();
-        }
+            }
+        }).unwrap();
 
-        for object in &mut objects {
-            thread::scope( |s| {
+        thread::scope( |s| {
+            for object in &mut objects {
                 s.spawn(|_| {
-                    points.append(&mut object.display());
                     object.integrate();
                 });
-            }).unwrap();
-        }
+            }
+        }).unwrap();
+
+        let points = points.lock().unwrap();
 
         canvas.set_draw_color(points[0].1);
         let mut points = points.iter().peekable();

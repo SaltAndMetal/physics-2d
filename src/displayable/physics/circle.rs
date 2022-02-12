@@ -85,10 +85,10 @@ impl Intersect for Circle
             }
             Shape::Rect(rect) => {
                 
-                let rotCirc = Circle::new(self.centre().rotate(&Vec2::new(0.0, 0.0), -rect.rotation()), self.radius());
+                let rotCirc = Circle::new(self.centre().rotate(&Vec2::new(0.0, 0.0), rect.rotation()), self.radius());
                 
-                let newBotLeft = rect.bottomLeft().rotate(&Vec2::new(0.0, 0.0), -rect.rotation());
-                let newTopRight = rect.topRight().rotate(&Vec2::new(0.0, 0.0), -rect.rotation());
+                let newBotLeft = rect.bottomLeft().rotate(&Vec2::new(0.0, 0.0), rect.rotation());
+                let newTopRight = rect.topRight().rotate(&Vec2::new(0.0, 0.0), rect.rotation());
                 let rotRect = Rect::new(newBotLeft, newTopRight, 0.0);
                 let points = rotRect.points();
 
@@ -111,12 +111,14 @@ impl Intersect for Circle
                     x if x > points[3].x() => XDirection::Right,
                     _ => XDirection::Middle,
                 };
+                println!("{:?}, {:?}, {:?}, {:?}, {:?}, {:?}", xDirection, rotCirc.position().x(), points[0].x(), points[3].x(), rect.points()[0].x(), rect.points()[3].x());
 
                 let yDirection = match rotCirc.position().y() {
                     y if y > points[1].y() => YDirection::Above,
                     y if y < points[0].y() => YDirection::Below,
                     _ => YDirection::Middle,
                 };
+                println!("{:?}", yDirection);
 
                 let closestPoint = match (xDirection, yDirection) {
                     (XDirection::Left, YDirection::Above) => points[1],
@@ -145,7 +147,7 @@ impl Circle
     #[inline]
     pub fn new(centre: Vec2, radius: f64) -> Circle
     {
-        Circle{centre, radius, velocity: Vec2::new(2.0, -2.0), mass: 1.0}
+        Circle{centre, radius, velocity: Vec2::new(2.0, 0.0), mass: 1.0}
     }
 
     #[inline]
