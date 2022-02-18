@@ -39,12 +39,6 @@ impl Physics for Shape {
             Self::Circle(circle) => circle.mass(),
         }
     }
-    fn impulse(&mut self, impulse: &Vec2){
-        match self {
-            Self::Rect(rect) => rect.impulse(impulse),
-            Self::Circle(circle) => circle.impulse(impulse),
-        }
-    }
     fn integrate(&mut self){
         match self {
             Self::Rect(rect) => rect.integrate(),
@@ -65,7 +59,6 @@ pub trait Physics: Displayable {
     fn position(&self) -> Vec2;
     fn velocity(&self) -> Vec2;
     fn mass(&self) -> f64;
-    fn impulse(&mut self, impulse: &Vec2);
 
     fn integrate(&mut self);
 }
