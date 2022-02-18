@@ -26,7 +26,24 @@ use crossbeam::thread;
 
 use std::sync::{Arc, Mutex};
 
+use std::f64::consts;
+
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
+
+enum Paused {
+    Paused,
+    Unpaused,
+}
+
+enum MouseMode {
+    Move,
+    Insert(Shape),
+}
+
+struct State {
+    paused: Paused,
+    mouseMode: MouseMode,
+}
 
 fn init() -> (sdl2::render::Canvas<Window>, sdl2::EventPump)
 {
@@ -51,15 +68,20 @@ fn main()
     let (mut canvas, mut event_pump) = init();
     
     let mut UIs: Vec<Box<dyn UI + Send + Sync>> = vec![
-        Box::new(Button::new(Point::new(0, 0), Point::new(100, 100), "images/rect.bmp")),
-        Box::new(Button::new(Point::new(100, 100), Point::new(200, 200), "images/circle.bmp"))
+        Box::new(Button::new(Point::new(0, 0), Point::new(100, 100), "images/pause.bmp")),
+        Box::new(Button::new(Point::new(100, 0), Point::new(200, 100), "images/move.bmp")),
+        Box::new(Button::new(Point::new(200, 0), Point::new(300, 100), "images/circle.bmp")),
+        Box::new(Button::new(Point::new(300, 0), Point::new(400, 100), "images/rect.bmp"))
     ];
 
     let mut objects: Vec<Shape> = vec![
-        Shape::Rect(Rect::new(Vec2::new(0.0, 0.0), Vec2::new(100.0, 200.0), 0.0)),
-        Shape::Circle(Circle::new(Vec2::new(-390.0, 100.0), 100.0)),
+        Shape::Rect(Rect::from_centre(Vec2::new(-30.0, 200.0), Vec2::new(100.0, 200.0), consts::FRAC_PI_2)),
+        Shape::Circle(Circle::new(Vec2::new(-390.0, 400.0), 150.0)),
     ];
-
+    
+    let mut paused = false;
+    objects[0].impulse(&Vec2::new(0.0, -2.0));
+    objects[1].impulse(&Vec2::new(2.0, -2.0));
     'running: loop {
         canvas.set_draw_color(Color::RGB(0, 0, 0));
         canvas.clear();
@@ -106,8 +128,9 @@ fn main()
                     points.lock().unwrap().append(p);
                 });
             }
-        }).unwrap();
 
+        }).unwrap();
+        if !paused{
         thread::scope( |s| {
             for object in &mut objects {
                 s.spawn(|_| {
@@ -115,6 +138,7 @@ fn main()
                 });
             }
         }).unwrap();
+        }
 
         let points = points.lock().unwrap();
 
