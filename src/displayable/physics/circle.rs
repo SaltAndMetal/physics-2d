@@ -34,7 +34,7 @@ impl Displayable for Circle
         //Start at the top of the circle, draws one eighth
         let mut x = 0;
         let mut y = self.radius as i32;
-        while x < y {
+        while x <= y {
             points.push(Vec2::new(x.into(), y.into()));
             let pointA = Vec2::new((x+1).into(), y.into());
             let pointB = Vec2::new((x+1).into(), (y-1).into());
@@ -67,6 +67,10 @@ impl Physics for Circle
     {
         self.mass
     }
+    #[inline]
+    fn impulse(&mut self, impulse: &Vec2) {
+        self.velocity += *impulse;
+    }
 
     #[inline]
     fn integrate(&mut self)
@@ -84,59 +88,7 @@ impl Intersect for Circle
                 (self.position()-circle.position()).len_squared() < (self.radius+circle.radius).powf(2.0_f64)
             }
             Shape::Rect(rect) => {
-                
-                let rotCirc = Circle::new(self.centre().rotate(&Vec2::new(0.0, 0.0), rect.rotation()), self.radius());
-                
-                let newBotLeft = rect.bottomLeft().rotate(&Vec2::new(0.0, 0.0), rect.rotation());
-                let newTopRight = rect.topRight().rotate(&Vec2::new(0.0, 0.0), rect.rotation());
-                let rotRect = Rect::new(newBotLeft, newTopRight, 0.0);
-                let points = rotRect.points();
-
-                #[derive(Debug)]
-                enum XDirection {
-                    Left,
-                    Middle,
-                    Right,
-                }
-                
-                #[derive(Debug)]
-                enum YDirection {
-                    Above,
-                    Middle,
-                    Below,
-                }
-
-                let xDirection = match rotCirc.position().x() {
-                    x if x < points[0].x() => XDirection::Left,
-                    x if x > points[3].x() => XDirection::Right,
-                    _ => XDirection::Middle,
-                };
-                println!("{:?}, {:?}, {:?}, {:?}, {:?}, {:?}", xDirection, rotCirc.position().x(), points[0].x(), points[3].x(), rect.points()[0].x(), rect.points()[3].x());
-
-                let yDirection = match rotCirc.position().y() {
-                    y if y > points[1].y() => YDirection::Above,
-                    y if y < points[0].y() => YDirection::Below,
-                    _ => YDirection::Middle,
-                };
-                println!("{:?}", yDirection);
-
-                let closestPoint = match (xDirection, yDirection) {
-                    (XDirection::Left, YDirection::Above) => points[1],
-                    (XDirection::Left, YDirection::Middle) => Vec2::new(points[0].x(), rotCirc.position().y()),
-                    (XDirection::Left, YDirection::Below) => points[0],
-                    (XDirection::Middle, YDirection::Above) =>  Vec2::new(rotCirc.position().x(), points[1].y()),
-                    (XDirection::Middle, YDirection::Middle) => return true,
-                    (XDirection::Middle, YDirection::Below) =>  Vec2::new(rotCirc.position().x(), points[0].y()),
-                    (XDirection::Right, YDirection::Above) => points[2],
-                    (XDirection::Right, YDirection::Middle) => Vec2::new(points[3].x(), rotCirc.position().y()),
-                    (XDirection::Right, YDirection::Below) => points[3],
-                };
-                if (closestPoint-rotCirc.position()).len_squared() < rotCirc.radius().powf(2.0_f64) {
-                    true
-                }
-                else {
-                    false
-                }
+                rect.intersect(&Shape::Circle(*self))
             },
         }
     }
@@ -147,7 +99,7 @@ impl Circle
     #[inline]
     pub fn new(centre: Vec2, radius: f64) -> Circle
     {
-        Circle{centre, radius, velocity: Vec2::new(2.0, 0.0), mass: 1.0}
+        Circle{centre, radius, velocity: Vec2::new(0.0, 0.0), mass: 1.0}
     }
 
     #[inline]

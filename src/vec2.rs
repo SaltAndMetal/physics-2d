@@ -39,6 +39,9 @@ impl Vec2
     {
         fst.x*snd.x+fst.y*snd.y
     }
+    pub fn perpendicular(&self) -> Vec2 {
+        Vec2::new(-self.y, self.x)
+    }
     pub fn polar(&self) -> (f64, f64) {
         //Some trickery goes on here. I use the absolute value of x and y, putting the result in
         //the first quadrant, then I adjust the angle back to the correct quadrant using the
@@ -72,7 +75,9 @@ impl Vec2
         let relativePos = *self-*axis;
         let x = relativePos.x();
         let y = relativePos.y();
-        *axis+Vec2{x: x*angle.cos()-y*angle.sin(), y: x*angle.sin()+y*angle.cos()}
+        let cos = angle.cos();
+        let sin = angle.sin();
+        *axis+Vec2{x: x*cos-y*sin, y: x*sin+y*cos}
 
     }
 }
@@ -216,5 +221,7 @@ mod tests {
 
         assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, std::f64::consts::FRAC_PI_2).x(), -2.0);
         assert_approx_eq!(Vec2{x: 3.0, y: 2.0}.rotate(&origin, std::f64::consts::FRAC_PI_2).y(), 3.0);
+
+        assert_approx_eq!(Vec2{x: 99.0, y: 200.0}.rotate(&Vec2{x: 1.0, y: 2.5}, 0.0).x(), 99.0)
     }
 }
