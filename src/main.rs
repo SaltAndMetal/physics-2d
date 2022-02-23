@@ -6,7 +6,7 @@ use crate::vec2::*;
 mod displayable;
 use crate::displayable::{Displayable, physics::{Shape, Physics, Intersect, rect::Rect, circle::Circle}};
 
-use crate::displayable::UI::{UI, button::Button, button::pauseButton::PauseButton};
+use crate::displayable::UI::{UI, button::Button};
 
 extern crate assert_approx_eq;
 pub use assert_approx_eq::assert_approx_eq;
@@ -30,8 +30,7 @@ use std::f64::consts;
 
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
 
-#[derive(PartialEq, Eq)]
-enum PausedMode {
+enum Paused {
     Paused,
     Unpaused,
 }
@@ -41,8 +40,8 @@ enum MouseMode {
     Insert(Shape),
 }
 
-pub struct State {
-    paused: PausedMode,
+struct State {
+    paused: Paused,
     mouseMode: MouseMode,
 }
 
@@ -66,15 +65,13 @@ fn init() -> (sdl2::render::Canvas<Window>, sdl2::EventPump)
 
 fn main()
 {
-    let mut state = State{paused: PausedMode::Unpaused, mouseMode: MouseMode::Move};
-
     let (mut canvas, mut event_pump) = init();
     
-    let mut buttons: Vec<Box<dyn Button + Send + Sync>> = vec![
-        Box::new(PauseButton::new(Point::new(0, 0), Point::new(100, 100), "images/pause.bmp")),
-        Box::new(PauseButton::new(Point::new(100, 0), Point::new(200, 100), "images/move.bmp")),
-        Box::new(PauseButton::new(Point::new(200, 0), Point::new(300, 100), "images/circle.bmp")),
-        Box::new(PauseButton::new(Point::new(300, 0), Point::new(400, 100), "images/rect.bmp"))
+    let mut UIs: Vec<Box<dyn UI + Send + Sync>> = vec![
+        Box::new(Button::new(Point::new(0, 0), Point::new(100, 100), "images/pause.bmp")),
+        Box::new(Button::new(Point::new(100, 0), Point::new(200, 100), "images/move.bmp")),
+        Box::new(Button::new(Point::new(200, 0), Point::new(300, 100), "images/circle.bmp")),
+        Box::new(Button::new(Point::new(300, 0), Point::new(400, 100), "images/rect.bmp"))
     ];
 
     let mut objects: Vec<Shape> = vec![
@@ -82,6 +79,7 @@ fn main()
         Shape::Circle(Circle::new(Vec2::new(-390.0, 400.0), 150.0)),
     ];
     
+    let mut paused = false;
     objects[0].impulse(&Vec2::new(0.0, -2.0));
     objects[1].impulse(&Vec2::new(2.0, -2.0));
     'running: loop {
@@ -91,17 +89,17 @@ fn main()
             match event {
                 Event::Quit{..} => break 'running,
                 Event::MouseButtonDown{x, y, ..} => {
-                    for button in &mut buttons {
-                        if button.in_bounds(Point::new(x, y)) {
-                            button.click_down(&mut state);
+                    for UI in &mut UIs {
+                        if UI.in_bounds(Point::new(x, y)) {
+                            UI.click_down();
                         }
                     }
                 },
 
                 Event::MouseButtonUp{..} => {
-                    for button in &mut buttons {
-                        if button.clicked() {
-                            button.click_up();
+                    for UI in &mut UIs {
+                        if UI.clicked() {
+                            UI.click_up();
                         }
                     }
                 }
@@ -112,7 +110,7 @@ fn main()
         let points = Arc::new(Mutex::new(Vec::new()));
         
         thread::scope( |s| {
-            for UI in &buttons {
+            for UI in &UIs {
                 s.spawn(|_| {
                     let p = &mut UI.display();
                     points.lock().unwrap().append(p);
@@ -120,20 +118,26 @@ fn main()
             }
             for object in &objects {
                 s.spawn(|_| {
+                    if objects[0].intersect(&objects[1]) {
+                        println!("Intersecting!");
+                    }
+                    else {
+                        println!("Not");
+                    }
                     let p = &mut object.display();
                     points.lock().unwrap().append(p);
                 });
             }
 
         }).unwrap();
-        if state.paused == PausedMode::Unpaused {
-            thread::scope( |s| {
-                for object in &mut objects {
-                    s.spawn(|_| {
-                        object.integrate();
-                    });
-                }
-            }).unwrap();
+        if !paused{
+        thread::scope( |s| {
+            for object in &mut objects {
+                s.spawn(|_| {
+                    object.integrate();
+                });
+            }
+        }).unwrap();
         }
 
         let points = points.lock().unwrap();
