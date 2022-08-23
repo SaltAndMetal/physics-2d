@@ -27,6 +27,9 @@ use crossbeam::thread;
 
 use std::sync::{Arc, Mutex};
 
+const DRAG: f64 = 1.0;
+const ELASTICITY: f64 = 1.0;
+
 const WINDOW_DIMENSIONS: (u32, u32) = (1000, 1000);
 const DELTA_TIME: Duration = Duration::from_millis(1_000/60);
 
@@ -69,7 +72,6 @@ fn main()
     let mut mode = Mode::Paused(ManipMode::Move);
 
     let (mut canvas, mut event_pump) = init();
-    
 
     let mut buttons: Vec<Box<dyn Button + Send + Sync>> = vec![
         Box::new(PauseButton::new(Point::new(0, 0), Point::new(100, 100), "images/pause.bmp")),
@@ -99,6 +101,9 @@ fn main()
     objects[5].impulse(&Vec2::new(1000.0, -1000.0));
     objects[6].impulse(&Vec2::new(-1000.0, 1000.0));
     objects[7].impulse(&Vec2::new(1000.0, 1000.0));
+
+    //let mut gravity = Vec2::new(0.0, -500.0);
+    let mut gravity = Vec2::zero();
     
     'running: loop {
         let mouse_state = event_pump.mouse_state();
@@ -255,7 +260,7 @@ fn main()
             thread::scope( |s| {
                 for object in objects.iter_mut() {
                     s.spawn(|_| {
-                        object.integrate();
+                        object.integrate(&gravity);
                     });
                 }
             }).unwrap();
