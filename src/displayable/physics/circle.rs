@@ -1,8 +1,6 @@
 use crate::vec2::Vec2;
 use crate::WINDOW_DIMENSIONS;
 use crate::DELTA_TIME;
-use crate::DRAG;
-use crate::ELASTICITY;
 use super::{Physics, Intersect, Shape};
 
 use sdl2::rect::Point;
@@ -93,11 +91,9 @@ impl Physics for Circle
         self.angular_velocity += impulse;
     }
     #[inline]
-    fn integrate(&mut self, gravity: &Vec2)
+    fn integrate(&mut self)
     {
         self.centre += self.velocity*DELTA_TIME.as_millis() as f64/1000.0;
-        self.velocity += *gravity*DELTA_TIME.as_millis() as f64/1000.0;
-        self.velocity = self.velocity * DRAG;
     }
     fn pointIn(&self, point: &Vec2) -> bool
     {
@@ -123,6 +119,7 @@ impl Physics for Circle
                 let initial = (v1*(theta1-epsilon).cos()*(m1-m2)+v2*2.0*m2*(theta2-epsilon).cos())/(m1+m2);
                 let x = initial*epsilon.cos()+v1*(theta1-epsilon).sin()*(epsilon+std::f64::consts::FRAC_PI_2).cos();
                 let y = initial*epsilon.sin()+v1*(theta1-epsilon).sin()*(epsilon+std::f64::consts::FRAC_PI_2).sin();
+                println!("{:?}, {:?}", x, y);
                 self.velocity = Vec2::new(x, y);
             },
 
@@ -131,8 +128,10 @@ impl Physics for Circle
                 let right = -left;
                 let bottom = -(WINDOW_DIMENSIONS.1 as f64)/2.0+self.radius()+1.0;
                 let top = -bottom;
+                println!("{}", left);
+                println!("{}", self.centre().x());
                 let mut new = self.clone();
-                new.integrate(&Vec2::zero());
+                new.integrate();
                 match (new.centre().x(), new.centre().y()) {
                     (x, y) if x < left => {
                         //self.centre = Vec2::new(left+1.0, y);
@@ -156,7 +155,6 @@ impl Physics for Circle
                 //let relativeRot = rect.rotation()-angle;
             },
         }
-        self.velocity = self.velocity * ELASTICITY;
     }
 }
 

@@ -64,11 +64,11 @@ impl Physics for Shape {
             Self::Circle(circle) => circle.angular_impulse(impulse),
         }
     }
-    fn integrate(&mut self, gravity: &Vec2)
+    fn integrate(&mut self)
     {
         match self {
-            Self::Rect(rect) => rect.integrate(gravity),
-            Self::Circle(circle) => circle.integrate(gravity),
+            Self::Rect(rect) => rect.integrate(),
+            Self::Circle(circle) => circle.integrate(),
         }
     }
     fn pointIn(&self, point: &Vec2) -> bool
@@ -132,7 +132,7 @@ pub trait Physics: Displayable {
     fn impulse(&mut self, impulse: &Vec2);
     fn angular_impulse(&mut self, impulse: f64);
     fn pointIn(&self, point: &Vec2) -> bool;
-    fn integrate(&mut self, gravity: &Vec2);
+    fn integrate(&mut self);
     fn resize(&mut self, point: &Vec2, newPoint: &Vec2, archive: &Self);
     fn rotate(&mut self, point: &Vec2, newPoint: &Vec2, archive: &Self);
     fn bounce(&mut self, other: &Shape);

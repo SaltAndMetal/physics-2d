@@ -77,7 +77,7 @@ impl Physics for Rect
     {
         self.angular_velocity += impulse;
     }
-    fn integrate(&mut self, gravity: &Vec2)
+    fn integrate(&mut self)
     {
         let ang = self.angular_velocity;
         let vel = self.velocity;
