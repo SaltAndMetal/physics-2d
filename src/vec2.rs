@@ -17,6 +17,11 @@ impl Vec2
         Vec2{x, y}
     }
 
+    pub fn zero() -> Vec2
+    {
+        Vec2{x: 0.0, y: 0.0}
+    }
+
     pub fn x(&self) -> f64
     {
         self.x
@@ -147,6 +152,18 @@ impl From<Vec2> for Point
         let x = (x + (WINDOW_DIMENSIONS.0/2) as f64) as i32;
         let y = (-y + (WINDOW_DIMENSIONS.1/2) as f64) as i32;
         Point::new(x, y)
+    }
+}
+
+impl From<Point> for Vec2
+{
+    fn from(point: Point) -> Vec2
+    {
+        let x = point.x;
+        let y = point.y;
+        let x = (x - (WINDOW_DIMENSIONS.0/2) as i32) as f64;
+        let y = (-y + (WINDOW_DIMENSIONS.1/2) as i32) as f64;
+        Vec2::new(x, y)
     }
 }
 

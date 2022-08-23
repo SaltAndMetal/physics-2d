@@ -1,4 +1,5 @@
 use crate::vec2::Vec2;
+use crate::DELTA_TIME;
 use super::{Physics, Intersect, Shape, circle::Circle};
 use super::super::Displayable;
 
@@ -14,6 +15,7 @@ pub struct Rect
     points: [Vec2; 4],
     rotation: f64,
     velocity: Vec2,
+    angular_velocity: f64,
     mass: f64,
 }
 
@@ -43,9 +45,22 @@ impl Physics for Rect
         (self.points[0]+self.points[2])/2.0
     }
     #[inline]
+    fn translateTo(&mut self, point: &Vec2)
+    {
+        let difference = *point - self.position();
+        for i in  0..4 {
+            self.points[i] += difference;
+        }
+    }
+    #[inline]
     fn velocity(&self) -> Vec2
     {
         self.velocity
+    }
+    #[inline]
+    fn angular_velocity(&self) -> f64
+    {
+        self.angular_velocity
     }
     #[inline]
     fn mass(&self) -> f64
@@ -57,24 +72,78 @@ impl Physics for Rect
     {
         self.velocity += *impulse
     }
-
+    #[inline]
+    fn angular_impulse(&mut self, impulse: f64)
+    {
+        self.angular_velocity += impulse;
+    }
     fn integrate(&mut self)
     {
-        //Unfortunately cannot use iterator and map with an array. If this was bigger I would have
-        //defined a macro for it.
-        self.points = [
-            self.points[0]+self.velocity,
-            self.points[1]+self.velocity,
-            self.points[2]+self.velocity,
-            self.points[3]+self.velocity
-            ];
-        self.rotation += 0.01;
-        self.points = [
-            self.points[0].rotate(&self.position(), 0.01),
-            self.points[1].rotate(&self.position(), 0.01),
-            self.points[2].rotate(&self.position(), 0.01),
-            self.points[3].rotate(&self.position(), 0.01)
-        ];
+        let ang = self.angular_velocity;
+        let vel = self.velocity;
+        for i in 0..self.points.len() {
+            self.points[i]+=self.velocity*DELTA_TIME.as_millis() as f64/1000.0;
+        }
+        *self = Rect::from_centre(self.position(), self.size(), self.rotation()+self.angular_velocity()*DELTA_TIME.as_millis() as f64/1000.0);
+        self.impulse(&vel);
+        self.angular_impulse(ang);
+    }
+    fn pointIn(&self, point: &Vec2) -> bool
+    {
+        let points = self.points();
+
+        //crossing number
+        let mut cn = 0;
+
+        for i in 0..4 {
+            let i1 = 
+                if i == 3 { 0 }
+                else {i+1};
+            let t = (point.y()-points[i1].y())/(points[i].y()-points[i1].y());
+            if t > 0.0 && t < 1.0 {
+                let x = points[i].x()*t + points[i1].x()*(1.0-t);
+                if x > point.x() {
+                    cn += 1;
+                }
+            }
+        }
+        cn%2 == 1
+    }
+    fn resize(&mut self, point: &Vec2, newPoint: &Vec2, archive: &Self) {
+        let rotPoint = point.rotate(&Vec2::zero(), -self.rotation());
+        let rotNewPoint = newPoint.rotate(&Vec2::zero(), -self.rotation());
+        let x = match rotPoint.x() {
+            x if x != 0.0 => rotPoint.x().abs()/rotPoint.x(),
+            _ => 0.0,
+        };
+        let y = match rotPoint.y() {
+            y if y != 0.0 => rotPoint.y().abs()/rotPoint.y(),
+            _ => 0.0,
+        };
+        let quadrant = Vec2::new(x, y);
+        let newSize = (rotNewPoint-rotPoint)*2.0;
+        let newSize = Vec2::new(newSize.x()*quadrant.x(), newSize.y()*quadrant.y());
+        let newSize = archive.size() + newSize;
+        let newSize = Vec2::new(newSize.x().abs(), newSize.y().abs());
+        //println!("{:?}", quadrant);
+
+        //println!("{:?} {:?} {:?}", newSize, archive.size(), rotNewPoint-rotPoint);
+
+        *self = Rect::from_centre(self.position(), newSize, self.rotation());
+    }
+    fn rotate(&mut self, point: &Vec2, newPoint: &Vec2, archive: &Self) {
+        let (_, angle) = point.polar();
+        let (_, newAngle) = newPoint.polar();
+        let newRotation = archive.rotation() + (newAngle-angle);
+        *self = Rect::from_centre(self.position(), self.size(), newRotation);
+    }
+    fn bounce(&mut self, other: &Shape) {
+        match other {
+            &Shape::Circle(circle) => {
+            },
+            &Shape::Rect(rect) => {
+            }
+        }
     }
 }
 
@@ -189,9 +258,20 @@ impl Rect
         let pointD = (centre - Vec2::new(-size.x(), size.y())/2.0).rotate(&centre, rotation);
         
         let points = [pointA, pointB, pointC, pointD];
-        Rect{points, rotation, velocity: Vec2::new(0.0, 0.0), mass: 1.0}
+        Rect{points, rotation, velocity: Vec2::zero(), angular_velocity: 0.0, mass: size.x()*size.y()}
     }
        
+    pub fn from_centre_with_mass(centre: Vec2, size: Vec2, rotation: f64, mass: f64) -> Rect
+    {
+        let pointA = (centre - size/2.0).rotate(&centre, rotation);
+        let pointB = (centre - Vec2::new(size.x(), -size.y())/2.0).rotate(&centre, rotation);
+        let pointC = (centre + size/2.0).rotate(&centre, rotation);
+        let pointD = (centre - Vec2::new(-size.x(), size.y())/2.0).rotate(&centre, rotation);
+        
+        let points = [pointA, pointB, pointC, pointD];
+        Rect{points, rotation, velocity: Vec2::zero(), angular_velocity: 0.0, mass}
+    }
+
     #[inline]
     pub fn bottomLeft(&self) -> Vec2
     {
